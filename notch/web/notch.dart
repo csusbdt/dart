@@ -1,11 +1,16 @@
+library notch;
+
 import 'dart:html';
 import 'dart:math' as Math;
-import 'dart:web_gl' as WebGL;
+import 'dart:web_gl' as GL;
 import 'dart:typed_data';
+
+part 'shader.dart';
+
+GL.RenderingContext gl;
 
 class Game {
   CanvasElement canvas;
-  WebGL.RenderingContext gl;
   Math.Random random;
   
   void start() {
@@ -23,7 +28,7 @@ class Game {
   void render(double time) {
     gl.viewport(0, 0, canvas.width, canvas.height);
     gl.clearColor(random.nextDouble(), random.nextDouble(), random.nextDouble(), 1.0);
-    gl.clear(WebGL.COLOR_BUFFER_BIT);
+    gl.clear(GL.COLOR_BUFFER_BIT);
     window.requestAnimationFrame(render);
   }
 }

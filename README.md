@@ -6,5 +6,6 @@
 
 Next: create a shader.  Start from following:
 
-   http://www.twitch.tv/notch/b/487318324&t=13m30s
+   http://www.twitch.tv/notch/b/487318324
+   28 minutes
 
