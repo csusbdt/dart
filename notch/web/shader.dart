@@ -35,3 +35,37 @@ class Shader {
     }
   }
 }
+
+Shader quadShader = new Shader("""
+  precision highp float;
+
+  attribute vec3 a_pos;
+
+  uniform mat4 u_objectTransform;
+  uniform mat4 u_cameraTransform;
+  uniform mat4 u_viewTransform;
+
+  varying vec2 v_texcoord;
+
+  void main() {
+    v_texcoord = a_pos.xy;
+    gl_Position = u_viewTransform * u_cameraTransform * u_objectTransform * vec4(a_pos, 1.0);
+  }
+""", """
+  precision highp float;
+
+  varying vec2 v_texcoord;
+
+  uniform vec3 u_color;
+  uniform sampler2D u_tex;
+
+  void main() {
+    vec4 col = texture2D(u_tex, v_texCoord);
+    if (col.a > 0.0) {
+      gl_FragColor = col * u_color;
+    } else {
+      discard;
+    }
+  }
+""");
+
