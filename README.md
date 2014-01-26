@@ -4,8 +4,5 @@
 
 (2) Follow http://www.twitch.tv/notch/b/487318324
 
-Next: create a shader.  Start from following:
-
-   http://www.twitch.tv/notch/b/487318324
-   1 hr 25 min
+Current location: 2 hr 3 min
 

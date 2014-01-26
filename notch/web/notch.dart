@@ -11,19 +11,60 @@ part 'shader.dart';
 
 GL.RenderingContext gl;
 
+class Texture {
+  static List<Texture> _allTextures = new List<Texture>();
+  
+  static void loadAll() {
+    _allTextures.forEach((t) => t._load());
+    _allTextures.clear();
+  }
+  
+  String url;
+  GL.Texture texture;
+  int width;
+  int height;
+  bool loaded = false;
+  
+  Texture(this.url) {
+    if (gl == null) {
+      _allTextures.add(this);
+    } else {
+      _load();
+    }
+  }
+  
+  void _load() {
+    ImageElement img = new ImageElement();
+    texture = gl.createTexture();
+    img.onLoad.listen((e) {
+      gl.bindTexture(GL.TEXTURE_2D, texture);
+      gl.texImage2DImage(GL.TEXTURE_2D, 0, GL.RGBA, GL.RGBA, GL.UNSIGNED_BYTE, img);
+      gl.texParameteri(GL.TEXTURE_2D, GL.TEXTURE_MIN_FILTER, GL.NEAREST);
+      gl.texParameteri(GL.TEXTURE_2D, GL.TEXTURE_MAG_FILTER, GL.NEAREST);
+      width = img.width;
+      height = img.height;
+      loaded = true;
+    });
+    img.src = url;
+  }
+}
+
 class Quad {
+  Texture texture;
   Shader shader;
   int posLocation;
   GL.UniformLocation objectTransformLocation;
   GL.UniformLocation cameraTransformLocation;
   GL.UniformLocation viewTransformLocation;
   GL.UniformLocation colorLocation;
+  GL.UniformLocation textureTransformLocation;
   
   Quad(this.shader) {
     posLocation = gl.getAttribLocation(shader.program, "a_pos");
     objectTransformLocation = gl.getUniformLocation(shader.program, "u_objectTransform");
     cameraTransformLocation = gl.getUniformLocation(shader.program, "u_cameraTransform");
     viewTransformLocation = gl.getUniformLocation(shader.program, "u_viewTransform");
+    textureTransformLocation = gl.getUniformLocation(shader.program, "u_textureTransform");
     colorLocation = gl.getUniformLocation(shader.program, "u_color");
 
     Float32List vertexArray = new Float32List(4 * 3);
@@ -48,19 +89,33 @@ class Quad {
     gl.bindBuffer(GL.ELEMENT_ARRAY_BUFFER, indexBuffer);
   }
   
+  void setTexture(Texture texture) {
+    this.texture = texture;
+    gl.bindTexture(GL.TEXTURE_2D, texture.texture);
+  }
+  
   void setCamera(Matrix4 viewMatrix, Matrix4 cameraMatrix) {
     gl.uniformMatrix4fv(viewTransformLocation, false, viewMatrix.storage);
     gl.uniformMatrix4fv(cameraTransformLocation, false, cameraMatrix.storage);
   }
   
   Matrix4 objectMatrix = new Matrix4.identity();
+  Matrix4 textureMatrix = new Matrix4.identity();
   
   void render(int x, int y, int w, int h, int uo, int vo, Vector4 color) {
+    if (!texture.loaded) return;
+      
     objectMatrix.setIdentity();
-    objectMatrix.translate(0.0, 0.0, -1.0);
-    objectMatrix.translate(x * 1.0, y * 1.0, 0.0);
+    objectMatrix.translate(x * 1.0, y * 1.0, -1.0);
     objectMatrix.scale(w * 1.0, h * 1.0, 0.0);
     gl.uniformMatrix4fv(objectTransformLocation, false, objectMatrix.storage);
+
+    textureMatrix.setIdentity();
+    textureMatrix.scale(1.0/texture.width, 1.0/texture.height, 0.0);
+    textureMatrix.translate(uo * 1.0, vo * 1.0, 0.0);
+    textureMatrix.scale(w * 1.0, h * 1.0, 0.0);    
+    gl.uniformMatrix4fv(textureTransformLocation, false, textureMatrix.storage);
+
     gl.uniform4fv(colorLocation, color.storage);
     gl.drawElements(GL.TRIANGLES, 6, GL.UNSIGNED_SHORT, 0);
   }
@@ -68,20 +123,23 @@ class Quad {
 
 class Game {
   CanvasElement canvas;
+  //Math.Random random;
+  Quad quad;
   Matrix4 viewMatrix;
   Matrix4 cameraMatrix;
-  Math.Random random;
-  Quad quad;
+  Texture sheetTexture = new Texture("tex/sheet.png");
+  
   double fov = 90.0;
   
   void start() {
-    random = new Math.Random();
+    //random = new Math.Random();
     canvas = querySelector("#game_canvas");
     gl = canvas.getContext("webgl");
     if (gl == null) {
       gl = canvas.getContext("experimental-webgl");
     }
     quad = new Quad(quadShader);
+    Texture.loadAll();
     if (gl != null) {
       window.requestAnimationFrame(render);
     }
@@ -91,32 +149,20 @@ class Game {
     gl.viewport(0, 0, canvas.width, canvas.height);
     gl.clearColor(0.0, 0.0, 0.0, 1.0);
     gl.clear(GL.COLOR_BUFFER_BIT);
+    
     viewMatrix = makePerspectiveMatrix(fov * Math.PI / 180, canvas.width/canvas.height, 0.01, 100.0);
     double scale = 2.0 / canvas.height;
-    cameraMatrix = new Matrix4.identity().scale(scale, scale, 1.0);
+    cameraMatrix = new Matrix4.identity().scale(scale, -scale, 1.0);
     quad.setCamera(viewMatrix, cameraMatrix);
+    
+    gl.bindTexture(GL.TEXTURE_2D, sheetTexture.texture);
     Vector4 whiteColor = new Vector4(1.0, 1.0, 1.0, 1.0);
-    quad.render(0, 0, 16, 16, 0, 0, whiteColor);
+    quad.setTexture(sheetTexture);
+    quad.render(0, 0, 16, 16, 8, 8, whiteColor);
     window.requestAnimationFrame(render);
   }
 }
 
-/*
-void reverseText(MouseEvent event) {
-  var text = querySelector("#sample_text_id").text;
-  var buffer = new StringBuffer();
-  for (int i = text.length - 1; i >= 0; i--) {
-    buffer.write(text[i]);
-  }
-  querySelector("#sample_text_id").text = buffer.toString();
-}
-*/
-
 void main() {
   new Game().start();
-  /*
-  querySelector("#sample_text_id")
-    ..text = "Click me!"
-    ..onClick.listen(reverseText);
-*/
 }
