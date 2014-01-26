@@ -12,11 +12,11 @@ part 'shader.dart';
 GL.RenderingContext gl;
 
 class Texture {
-  static List<Texture> _allTextures = new List<Texture>();
+  static List<Texture> _pendingTextures = new List<Texture>();
   
   static void loadAll() {
-    _allTextures.forEach((t) => t._load());
-    _allTextures.clear();
+    _pendingTextures.forEach((t) => t._load());
+    _pendingTextures.clear();
   }
   
   String url;
@@ -27,7 +27,7 @@ class Texture {
   
   Texture(this.url) {
     if (gl == null) {
-      _allTextures.add(this);
+      _pendingTextures.add(this);
     } else {
       _load();
     }
