@@ -103,11 +103,11 @@ class Quad {
   Matrix4 objectMatrix = new Matrix4.identity();
   Matrix4 textureMatrix = new Matrix4.identity();
   
-  void render(int x, int y, int w, int h, int uo, int vo, Vector4 color) {
+  void render(Vector3 pos, int w, int h, int uo, int vo, Vector4 color) {
     if (!texture.loaded) return;
-      
+
     objectMatrix.setIdentity();
-    objectMatrix.translate(x * 1.0, y * 1.0, -1.0);
+    objectMatrix.translate(pos.x - w/2.0, pos.y - h * 1.0, pos.z * 1.0 - 1.0);
     objectMatrix.scale(w * 1.0, h * 1.0, 0.0);
     gl.uniformMatrix4fv(objectTransformLocation, false, objectMatrix.storage);
 
@@ -126,8 +126,8 @@ class Game {
   CanvasElement canvas;
   //Math.Random random;
   Quad quad;
-  Matrix4 viewMatrix;
-  Matrix4 cameraMatrix;
+  //Matrix4 viewMatrix;
+  //Matrix4 cameraMatrix;
   Texture sheetTexture = new Texture("tex/sheet.png");
   
   double fov = 90.0;
@@ -144,22 +144,27 @@ class Game {
     if (gl != null) {
       window.requestAnimationFrame(render);
     }
+    
+    gl.enable(GL.DEPTH_TEST);
+    gl.depthFunc(GL.LESS);
   }
   
   void render(double time) {
+    double pixelScale = 2.0;
     gl.viewport(0, 0, canvas.width, canvas.height);
     gl.clearColor(0.0, 0.0, 0.0, 1.0);
     gl.clear(GL.COLOR_BUFFER_BIT);
     
-    viewMatrix = makePerspectiveMatrix(fov * Math.PI / 180, canvas.width/canvas.height, 0.01, 100.0);
-    double scale = 2.0 / canvas.height;
-    cameraMatrix = new Matrix4.identity().scale(scale, -scale, 1.0);
-    quad.setCamera(viewMatrix, cameraMatrix);
+    Matrix4 viewMatrix = makePerspectiveMatrix(fov * Math.PI / 180, canvas.width/canvas.height, 0.01, 100.0);
+    double scale = pixelScale * 2.0 / canvas.height;
+    Matrix4 screenMatrix = new Matrix4.identity().scale(scale, -scale, 1.0);
+    Matrix4 cameraMatrix = new Matrix4.identity().translate(0.0, 10.0, 0.0).rotateY(new DateTime.now().millisecondsSinceEpoch % 1000 / 1000.0 * Math.PI * 2.0);
+    quad.setCamera(viewMatrix, screenMatrix);
     
     gl.bindTexture(GL.TEXTURE_2D, sheetTexture.texture);
     Vector4 whiteColor = new Vector4(1.0, 1.0, 1.0, 1.0);
     quad.setTexture(sheetTexture);
-    quad.render(0, 0, 16, 16, 8, 8, whiteColor);
+    quad.render(cameraMatrix * new Vector3(-10.0, 0.0, 0.0), 24, 95, 0, 0, whiteColor);
     window.requestAnimationFrame(render);
   }
 }
