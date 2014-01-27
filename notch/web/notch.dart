@@ -52,7 +52,10 @@ class Texture {
 class Quad {
   Texture texture;
   Shader shader;
-  int posLocation;
+  int posLocation;  
+  Matrix4 objectMatrix = new Matrix4.identity();
+  Matrix4 textureMatrix = new Matrix4.identity();
+
   GL.UniformLocation objectTransformLocation;
   GL.UniformLocation cameraTransformLocation;
   GL.UniformLocation viewTransformLocation;
@@ -87,7 +90,6 @@ class Quad {
     GL.Buffer indexBuffer = gl.createBuffer();
     gl.bindBuffer(GL.ELEMENT_ARRAY_BUFFER, indexBuffer);
     gl.bufferDataTyped(GL.ELEMENT_ARRAY_BUFFER, indexArray, GL.STATIC_DRAW);
-    //gl.bindBuffer(GL.ELEMENT_ARRAY_BUFFER, indexBuffer);
   }
   
   void setTexture(Texture texture) {
@@ -100,23 +102,38 @@ class Quad {
     gl.uniformMatrix4fv(cameraTransformLocation, false, cameraMatrix.storage);
   }
   
-  Matrix4 objectMatrix = new Matrix4.identity();
-  Matrix4 textureMatrix = new Matrix4.identity();
-  
-  void render(Vector3 pos, int w, int h, int uo, int vo, Vector4 color) {
+  void renderBillboard(Vector3 pos, int w, int h, int uo, int vo, Vector4 color) {
     if (!texture.loaded) return;
 
     objectMatrix.setIdentity();
-    objectMatrix.translate(pos.x - w/2.0, pos.y - h * 1.0, pos.z * 1.0 - 1.0);
+    objectMatrix.translate(pos.x - w/2.0, pos.y - h * 1.0, pos.z);
     objectMatrix.scale(w * 1.0, h * 1.0, 0.0);
     gl.uniformMatrix4fv(objectTransformLocation, false, objectMatrix.storage);
 
     textureMatrix.setIdentity();
     textureMatrix.scale(1.0/texture.width, 1.0/texture.height, 0.0);
+    textureMatrix.translate((uo + 0.25), (vo + 0.25), 0.0);
+    textureMatrix.scale((w - 0.5), (h - 0.5), 0.0);    
+    gl.uniformMatrix4fv(textureTransformLocation, false, textureMatrix.storage);
+
+    gl.uniform4fv(colorLocation, color.storage);
+    gl.drawElements(GL.TRIANGLES, 6, GL.UNSIGNED_SHORT, 0);
+  }
+
+  void render(Vector3 pos, int w, int h, int uo, int vo, Vector4 color) {
+    if (!texture.loaded) return;
+  
+    objectMatrix.setIdentity();
+    objectMatrix.translate(pos.x, pos.y, pos.z);
+    objectMatrix.scale(w * 1.0, h * 1.0, 0.0);
+    gl.uniformMatrix4fv(objectTransformLocation, false, objectMatrix.storage);
+  
+    textureMatrix.setIdentity();
+    textureMatrix.scale(1.0/texture.width, 1.0/texture.height, 0.0);
     textureMatrix.translate(uo * 1.0, vo * 1.0, 0.0);
     textureMatrix.scale(w * 1.0, h * 1.0, 0.0);    
     gl.uniformMatrix4fv(textureTransformLocation, false, textureMatrix.storage);
-
+  
     gl.uniform4fv(colorLocation, color.storage);
     gl.drawElements(GL.TRIANGLES, 6, GL.UNSIGNED_SHORT, 0);
   }
@@ -124,16 +141,12 @@ class Quad {
 
 class Game {
   CanvasElement canvas;
-  //Math.Random random;
   Quad quad;
-  //Matrix4 viewMatrix;
-  //Matrix4 cameraMatrix;
-  Texture sheetTexture = new Texture("tex/sheet.png");
-  
+  Texture sheetTexture = new Texture("tex/sheet.png");  
+  Texture groundTexture = new Texture("tex/ground.png");  
   double fov = 90.0;
   
   void start() {
-    //random = new Math.Random();
     canvas = querySelector("#game_canvas");
     gl = canvas.getContext("webgl");
     if (gl == null) {
@@ -151,20 +164,28 @@ class Game {
   
   void render(double time) {
     double pixelScale = 2.0;
+    
     gl.viewport(0, 0, canvas.width, canvas.height);
     gl.clearColor(0.0, 0.0, 0.0, 1.0);
     gl.clear(GL.COLOR_BUFFER_BIT);
     
-    Matrix4 viewMatrix = makePerspectiveMatrix(fov * Math.PI / 180, canvas.width/canvas.height, 0.01, 100.0);
+    Matrix4 viewMatrix = makePerspectiveMatrix(fov * Math.PI / 180.0, canvas.width/canvas.height, 0.01, 100.0);
     double scale = pixelScale * 2.0 / canvas.height;
-    Matrix4 screenMatrix = new Matrix4.identity().scale(scale, -scale, 1.0);
-    Matrix4 cameraMatrix = new Matrix4.identity().translate(0.0, 10.0, 0.0).rotateY(new DateTime.now().millisecondsSinceEpoch % 1000 / 1000.0 * Math.PI * 2.0);
-    quad.setCamera(viewMatrix, screenMatrix);
-    
-    gl.bindTexture(GL.TEXTURE_2D, sheetTexture.texture);
+    Matrix4 screenMatrix = new Matrix4.identity().scale(scale, -scale, scale);
+    double rot = new DateTime.now().millisecondsSinceEpoch % 4000 / 4000.0 * Math.PI * 2.0;
+    Matrix4 cameraMatrix = new Matrix4.identity().translate(0.0, 8.0, -50.0).rotateY(rot);
+    Matrix4 floorCameraMatrix = new Matrix4.identity().translate(0.0, 32.0, -50.0).rotateX(Math.PI / 2.0);
+
     Vector4 whiteColor = new Vector4(1.0, 1.0, 1.0, 1.0);
-    quad.setTexture(sheetTexture);
-    quad.render(cameraMatrix * new Vector3(-10.0, 0.0, 0.0), 24, 95, 0, 0, whiteColor);
+
+    quad.setCamera(viewMatrix, screenMatrix * cameraMatrix * floorCameraMatrix);
+    quad.setTexture(groundTexture);
+    quad.render(new Vector3(0.0, 0.0, 0.0), 256, 256, 0, 0, whiteColor);
+    
+    quad.setCamera(viewMatrix, screenMatrix);
+    quad.setTexture(sheetTexture);    
+    quad.renderBillboard(cameraMatrix * new Vector3(-30.0, 0.0, 0.0), 24, 95, 0, 0, whiteColor);
+    
     window.requestAnimationFrame(render);
   }
 }
