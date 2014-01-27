@@ -56,16 +56,16 @@ class Quad {
   GL.UniformLocation objectTransformLocation;
   GL.UniformLocation cameraTransformLocation;
   GL.UniformLocation viewTransformLocation;
-  GL.UniformLocation colorLocation;
   GL.UniformLocation textureTransformLocation;
+  GL.UniformLocation colorLocation;
   
   Quad(this.shader) {
-    posLocation = gl.getAttribLocation(shader.program, "a_pos");
-    objectTransformLocation = gl.getUniformLocation(shader.program, "u_objectTransform");
-    cameraTransformLocation = gl.getUniformLocation(shader.program, "u_cameraTransform");
-    viewTransformLocation = gl.getUniformLocation(shader.program, "u_viewTransform");
+    posLocation              = gl.getAttribLocation(shader.program, "a_pos");
+    objectTransformLocation  = gl.getUniformLocation(shader.program, "u_objectTransform");
+    cameraTransformLocation  = gl.getUniformLocation(shader.program, "u_cameraTransform");
+    viewTransformLocation    = gl.getUniformLocation(shader.program, "u_viewTransform");
     textureTransformLocation = gl.getUniformLocation(shader.program, "u_textureTransform");
-    colorLocation = gl.getUniformLocation(shader.program, "u_color");
+    colorLocation =            gl.getUniformLocation(shader.program, "u_color");
 
     Float32List vertexArray = new Float32List(4 * 3);
     vertexArray.setAll(0 * 3, [0.0, 0.0, 0.0]);
@@ -78,6 +78,7 @@ class Quad {
 
     gl.useProgram(shader.program);
     gl.enableVertexAttribArray(posLocation);
+    
     GL.Buffer vertexBuffer = gl.createBuffer();
     gl.bindBuffer(GL.ARRAY_BUFFER, vertexBuffer);
     gl.bufferDataTyped(GL.ARRAY_BUFFER, vertexArray, GL.STATIC_DRAW);
@@ -86,7 +87,7 @@ class Quad {
     GL.Buffer indexBuffer = gl.createBuffer();
     gl.bindBuffer(GL.ELEMENT_ARRAY_BUFFER, indexBuffer);
     gl.bufferDataTyped(GL.ELEMENT_ARRAY_BUFFER, indexArray, GL.STATIC_DRAW);
-    gl.bindBuffer(GL.ELEMENT_ARRAY_BUFFER, indexBuffer);
+    //gl.bindBuffer(GL.ELEMENT_ARRAY_BUFFER, indexBuffer);
   }
   
   void setTexture(Texture texture) {
