@@ -1,6 +1,6 @@
 library scene;
 
-import 'song.dart' as song;
+import 'box_song.dart' as song;
 import 'package:vector_math/vector_math.dart';
 
 Matrix4 transform = new Matrix4.identity().scale(1.0, 1.0, 1.0).translate(0.0, 0.0, -4.0);

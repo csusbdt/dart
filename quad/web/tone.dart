@@ -1,22 +1,8 @@
 library tone;
 
 import 'dart:web_audio';
-import 'dart:async';
 
 AudioContext ctx = new AudioContext();
-
-var _tones = new Set<Tone>();
-
-Tone getTone() {
-  if (_tones.isEmpty) _tones.add(new Tone());
-  Tone tone = _tones.first;
-  _tones.remove(tone);
-  return tone;
-}
-
-void recycleTone(Tone tone) {
-  _tones.add(tone);
-}
 
 class Tone {
   OscillatorNode oscillator;
@@ -43,14 +29,7 @@ class Tone {
   void set frequency(double value) {
     oscillator.frequency.value = value;
   }
-  
-  void play(int milliseconds) {
-    start();
-    var timer = new Timer(new Duration(milliseconds: milliseconds), () {
-      stop();
-    });
-  }
-  
+    
   void start() {
     oscillator.start(0);
   }
