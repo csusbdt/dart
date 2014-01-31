@@ -62,7 +62,7 @@ Note noteB = new Note()
     ..minFrequency = 120.0
     ..maxFrequency = 195.0
     ..averageDuration = 2000.0
-    ..tone.gain = 0.8
+    ..tone.gain = 0.5
     ..transform = new Matrix4.identity().translate(0.0, 0.0, 0.2);
 
 Note noteC = new Note()
@@ -71,7 +71,7 @@ Note noteC = new Note()
     ..minFrequency = 215.0
     ..maxFrequency = 255.0
     ..averageDuration = 5000.0
-    ..tone.gain = 0.2;
+    ..tone.gain = 0.8;
 
 Matrix4 cStartTransform = new Matrix4.identity().translate(1.0, -1.0, 0.1);
 Matrix4 cEndTransform = new Matrix4.identity().translate(-1.0, -1.0, 0.1);
