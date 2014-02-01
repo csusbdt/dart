@@ -50,3 +50,9 @@ void render(double time) {
   scene.render(time);
   window.requestAnimationFrame(render);
 }
+
+double get volume {
+  double max = double.parse((querySelector('#volume') as RangeInputElement).max);
+  double value = (querySelector('#volume') as RangeInputElement).valueAsNumber;
+  return value / max;
+}
